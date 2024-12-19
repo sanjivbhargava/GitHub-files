@@ -1,0 +1,67 @@
+name: MyProject CI/CD
+
+on:
+  # Optimization: Added pull_request event to trigger workflow on PRs as well
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      BUILD_ENV: production
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      # Optimization: Added Node.js setup step to ensure the correct version is used
+      uses: actions/setup-node@v3
+      with:
+        node-version: '14'
+
+    - name: Build
+      run: ./build.sh
+
+    - name: Test
+      run: ./test.sh
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      BUILD_ENV: production
+
+    steps:
+    - name: Deploy
+      run: ./deploy.sh
+
+  post:
+    runs-on: ubuntu-latest
+    needs: [build, deploy]
+    if: always()
+    steps:
+    - name: Archive Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: JAR Files
+        path: '**/target/*.jar'
+
+    - name: Publish Test Results
+      uses: actions/upload-artifact@v3
+      with:
+        name: Test Reports
+        path: 'reports/**/*.xml'
+
+    - name: Notify Success
+      if: success()
+      run: echo 'Pipeline succeeded!'
+
+    - name: Notify Failure
+      if: failure()
+      run: echo 'Pipeline failed.'
