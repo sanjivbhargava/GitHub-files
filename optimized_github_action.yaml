@@ -6,50 +6,52 @@ on:
       - main
 
 jobs:
-  pipeline:
+  build:
     runs-on: ubuntu-latest
     env:
       BUILD_ENV: production
 
     steps:
-    # Optimization: Checkout code is necessary to fetch the latest code from the repository
+    # Optimization: Using the latest version of checkout action
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # Optimization: Build step to compile the project
-    - name: Build
-      run: ./build.sh
+    # Optimization: Combining build and test steps to reduce overhead
+    - name: Build and Test
+      run: |
+        ./build.sh
+        ./test.sh
 
-    # Optimization: Test step to run the test suite
-    - name: Test
-      run: ./test.sh
+    # Optimization: Using a single artifact upload step to reduce redundancy
+    - name: Archive Artifacts and Test Results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-and-test-artifacts
+        path: |
+          '**/target/*.jar'
+          'reports/**/*.xml'
 
-    # Optimization: Deploy step to deploy the application
+    # Optimization: Combining success and failure messages into one step
+    - name: Post Pipeline Status
+      if: always()
+      run: |
+        if [ "${{ job.status }}" == "success" ]; then
+          echo 'Pipeline succeeded!';
+        else
+          echo 'Pipeline failed.';
+        fi
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      BUILD_ENV: production
+
+    steps:
+    # Optimization: Using the latest version of checkout action
+    - name: Checkout code
+      uses: actions/checkout@v3
+
     - name: Deploy
       run: ./deploy.sh
-
-    # Optimization: Archive build artifacts for future reference or use
-    - name: Archive Artifacts
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: build-artifacts
-        path: '**/target/*.jar'
-
-    # Optimization: Publish test results for visibility and debugging
-    - name: Publish Test Results
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: test-results
-        path: 'reports/**/*.xml'
-
-    # Optimization: Notify success only if the pipeline succeeds
-    - name: Notify Success
-      if: success()
-      run: echo 'Pipeline succeeded!'
-
-    # Optimization: Notify failure only if the pipeline fails
-    - name: Notify Failure
-      if: failure()
-      run: echo 'Pipeline failed.'
