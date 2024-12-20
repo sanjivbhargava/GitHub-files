@@ -14,20 +14,22 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Build and Test
+     - name: Build and Test
         run: |
-          if [[ ! -f ./build.sh ]]; then
-            echo "Error: build.sh not found. Please ensure it's in the repository root."
+          # Check for script existence and permissions
+          if [[ ! -f ./build.sh || ! -x ./build.sh ]]; then
+            echo "Error: build.sh not found or not executable!"
             exit 1
           fi
 
-          if [[ ! -x ./build.sh ]]; then
-            echo "Error: build.sh is not executable. Please make it executable."
+          if [[ ! -f ./test.sh || ! -x ./test.sh ]]; then
+            echo "Error: test.sh not found or not executable!"
             exit 1
           fi
 
-          ./build.sh
-          ./test.sh
+          # Explicitly use bash to execute the scripts
+          bash ./build.sh
+          bash ./test.sh
 
   deploy:
     runs-on: ubuntu-latest
