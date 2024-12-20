@@ -27,10 +27,9 @@ jobs:
             exit 1
           fi
 
-          # Explicitly use bash to execute the scripts
+          # Explicitly use bash
           bash ./build.sh
           bash ./test.sh
-
   deploy:
     runs-on: ubuntu-latest
     needs: build
