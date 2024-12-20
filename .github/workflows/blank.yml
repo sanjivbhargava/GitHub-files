@@ -12,51 +12,52 @@ jobs:
       BUILD_ENV: production
 
     steps:
-    # Optimization: Using the latest version of checkout action for better performance and security
-    - name: Checkout code
-      uses: actions/checkout@v3
+      # Checkout code (using the latest version)
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    # Optimization: Combining build and test steps to reduce the number of job steps and improve performance
-    - name: Build and Test
-      run: |
-        ./build.sh
-        ./test.sh
+      # Build and Test (combined)
+      - name: Build and Test
+        run: |
+          # Assuming build.sh and test.sh are in the root of your repository
+          sh ./build.sh  # Use "sh" to run shell scripts on Ubuntu
+          sh ./test.sh
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build
+    needs: build  # This job depends on the successful completion of the "build" job
     env:
       BUILD_ENV: production
 
     steps:
-    # Optimization: Added a step to ensure the build artifacts are available before deployment
-    - name: Ensure Build Artifacts
-      run: ls -la ./build
+      # Ensure Build Artifacts exist (before deployment)
+      - name: Ensure Build Artifacts
+        run: ls -la ./build
 
-    - name: Deploy
-      run: ./deploy.sh
+      - name: Deploy
+        run: sh ./deploy.sh  # Use "sh" to run shell scripts
 
   post:
     runs-on: ubuntu-latest
-    needs: [build, deploy]
+    needs: [build, deploy]  # This job depends on both "build" and "deploy" jobs
 
     steps:
-    # Optimization: Using a single upload-artifact action to handle both JAR files and test reports
-    - name: Archive Artifacts and Publish Test Results
-      if: always()
-      uses: actions/upload-artifact@v2
-      with:
-        name: Artifacts
-        path: |
-          '**/target/*.jar'
-          'reports/**/*.xml'
+      # Upload artifacts and publish test results (combined)
+      - name: Archive Artifacts and Publish Test Results
+        if: always()  # This step runs even if previous jobs fail
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifacts
+          path: |
+            '**/target/*.jar'  # Upload all JAR files from the "target" directory
+            'reports/**/*.xml'  # Upload all XML test reports from the "reports" directory (recursive)
 
-    # Optimization: Combining success and failure notifications into a single step to reduce redundancy
-    - name: Notify Result
-      if: always()
-      run: |
-        if [ "${{ job.status }}" == "success" ]; then
-          echo 'Pipeline succeeded!';
-        else
-          echo 'Pipeline failed.';
-        fi
+      # Notify Result (combined success/failure message)
+      - name: Notify Result
+        if: always()  # This step runs even if previous jobs fail
+        run: |
+          if [[ "${{ job.status }}" == "success" ]]; then
+            echo 'Pipeline succeeded!'
+          else
+            echo 'Pipeline failed.'
+          fi
