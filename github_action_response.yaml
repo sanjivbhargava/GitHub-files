@@ -10,38 +10,42 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      # Checkout code from repository
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Checkout
-      run: echo 'Checking out code...'
+      # Build stage
+      - name: Build
+        run: |
+          echo 'Building the project...'
+          # Replace with your build command, e.g., 'mvn clean install' for Maven projects
+          echo "Build step executed"
 
-    - name: Build
-      run: |
-        echo 'Building the project...'
-        # Replace with your build command, e.g., 'mvn clean install' for Maven projects
-        echo "Build step executed"
+      # Test stage
+      - name: Test
+        run: |
+          echo 'Running tests...'
+          # Replace with your test command, e.g., 'npm test' or 'mvn test'
+          echo "Test step executed"
 
-    - name: Test
-      run: |
-        echo 'Running tests...'
-        # Replace with your test command, e.g., 'npm test' or 'mvn test'
-        echo "Test step executed"
+      # Deploy stage
+      - name: Deploy
+        run: |
+          echo 'Deploying the application...'
+          # Replace with your deploy command or scripts
+          echo "Deploy step executed"
 
-    - name: Deploy
-      run: |
-        echo 'Deploying the application...'
-        # Replace with your deploy command or scripts
-        echo "Deploy step executed"
+      # Cleanup workspace
+      - name: Cleanup
+        if: always()
+        run: echo 'Cleaning up workspace...'
 
-    - name: Cleanup
-      if: always()
-      run: echo 'Cleaning up workspace...'
+      # Notify success
+      - name: Success Message
+        if: ${{ success() }}
+        run: echo 'Pipeline succeeded!'
 
-    - name: Success Message
-      if: success()
-      run: echo 'Pipeline succeeded!'
-
-    - name: Failure Message
-      if: failure()
-      run: echo 'Pipeline failed!'
+      # Notify failure
+      - name: Failure Message
+        if: ${{ failure() }}
+        run: echo 'Pipeline failed!'
