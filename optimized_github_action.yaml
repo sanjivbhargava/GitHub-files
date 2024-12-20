@@ -12,15 +12,22 @@ jobs:
       BUILD_ENV: production
 
     steps:
-    # Optimization: Using the latest version of checkout action for better performance and security
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    # Optimization: Combining build and test steps to reduce the number of job steps and improve performance
-    - name: Build and Test
-      run: |
-        ./build.sh
-        ./test.sh
+      - name: Build and Test
+        run: |
+          if [[ ! -f ./build.sh ]]; then
+            echo "Error: build.sh not found. Please ensure it's in the repository root."
+            exit 1
+          fi
+
+          if [[ ! -x ./build.sh ]]; then
+            echo "Error: build.sh is not executable. Please make it executable."
+            exit 1
+          fi
+
+          ./build.sh
+          ./test.sh
 
   deploy:
     runs-on: ubuntu-latest
@@ -29,34 +36,31 @@ jobs:
       BUILD_ENV: production
 
     steps:
-    # Optimization: Added a step to ensure the build artifacts are available before deployment
-    - name: Ensure Build Artifacts
-      run: ls -la ./build
+      - name: Ensure Build Artifacts
+        run: ls -la ./build
 
-    - name: Deploy
-      run: ./deploy.sh
+      - name: Deploy
+        run: ./deploy.sh
 
   post:
     runs-on: ubuntu-latest
     needs: [build, deploy]
 
     steps:
-    # Optimization: Using a single upload-artifact action to handle both JAR files and test reports
-    - name: Archive Artifacts and Publish Test Results
-      if: always()
-      uses: actions/upload-artifact@v2
-      with:
-        name: Artifacts
-        path: |
-          '**/target/*.jar'
-          'reports/**/*.xml'
+      - name: Archive Artifacts and Publish Test Results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifacts
+          path: |
+            **/target/*.jar
+            reports/**/*.xml
 
-    # Optimization: Combining success and failure notifications into a single step to reduce redundancy
-    - name: Notify Result
-      if: always()
-      run: |
-        if [ "${{ job.status }}" == "success" ]; then
-          echo 'Pipeline succeeded!';
-        else
-          echo 'Pipeline failed.';
-        fi
+      - name: Notify Result
+        if: always()
+        run: |
+          if [[ "${{ job.status }}" == "success" ]]; then
+            echo "Pipeline succeeded!"
+          else
+            echo "Pipeline failed."
+          fi
